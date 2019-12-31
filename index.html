@@ -1,8 +1,129 @@
 <html>
   <head>
-
+    <title>tilerip-webview</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <!-- leaflet -->
+    <link rel="stylesheet" href="css/leaflet/leaflet.css"/> 
+    <!-- leaflet-geoman -->
+    <link rel="stylesheet" href="css/leaflet-geoman/leaflet-geoman.css"/>
+    <!-- leaflet geoman -->
+    <link rel="stylesheet" href="js/leaflet-extra-markers/css/leaflet.extra-markers.min.css"/>
+    <!-- vuetify -->
+    <link rel="stylesheet" href="js/vuetify/vuetify.min.css"/>
+    <!-- fontawesome -->
+    <link rel="stylesheet" href="css/fontawesome/css/all.min.css"/>
+    <!-- app -->
+    <link rel="stylesheet" href="css/app.css"/>
   </head>
   <body>
-    
+    <div id="app">
+      <v-app>
+        <v-content>
+          <v-container>
+            <div class="download-container"
+              v-if="tilesCalculated && tilesRequired.length > 0"
+            >
+              <v-btn
+                small
+              >
+                <v-icon left>
+                  fa-download
+                </v-icon>
+                {{ tilesRequired.length }}
+              </v-btn>
+            </div>
+            <div class="calculate-tiles">
+              <v-btn
+                small
+                @click="calculateTiles"
+              >
+                <v-icon>
+                  fa-calculator
+                </v-icon>
+            </div>
+            <div class="zoom-display">
+              {{ mapZoom }}
+            </div>
+            <v-select
+              class="select-1"
+              v-model="selectMinZoom"
+              :items="selectMinZoomItems"
+              label="Min"
+              dense
+            ></v-select>
+            <v-select
+              class="select-2"
+              v-model="selectMaxZoom"
+              :items="selectMaxZoomItems"
+              label="Max"
+              dense
+            ></v-select>
+            <div class="tileLayerContainer">
+              <v-btn
+                small
+                class="tile-button"
+                @click="showTileLayerList = !showTileLayerList"
+              >
+                <v-icon dense>fa-layer-group</v-icon>
+              </v-btn>
+              <v-list  class="tile-layer-list"
+                v-if="showTileLayerList"
+                dense
+              >
+                <v-list-item-group>
+                  <v-list-item
+                    @click="tileServerUsgs()"
+                  >
+                    <v-list-item-content>
+                      <v-list-item-title>
+                        USGS Topographic
+                      </v-list-item-title>
+                    </v-list-item-content>
+                  </v-list-item>
+                  <v-list-item
+                    @click="tileServerOpenTopo()"
+                  >
+                    <v-list-item-content>
+                      <v-list-item-title>
+                        Open Topo
+                      </v-list-item-title>
+                    </v-list-item-content>
+                  </v-list-item>
+                  <v-list-item
+                    @click="tileServerEsriWorldImagery()"
+                  >
+                    <v-list-item-content>
+                      <v-list-item-title>
+                        Esri World Imagery
+                      </v-list-item-title>
+                    </v-list-item-content>
+                  </v-list-item>
+                  <v-list-item
+                    @click="tileServerOpenStreetMap()"
+                  >
+                    <v-list-item-content>
+                      <v-list-item-title>
+                        Open Street Map
+                      </v-list-item-title>
+                    </v-list-item-content>
+                  </v-list-item>
+                </v-list-item-group>
+              </v-list>
+            </div>
+            <div id="map"></div>
+          </v-container>
+        </v-content>
+      </v-app>
+    </div>
+
+    <script src="js/vue.js"></script>
+    <script src="js/leaflet.js"></script>
+    <script src="js/leaflet-geoman.min.js"></script>
+    <script src="js/leaflet-extra-markers/js/leaflet.extra-markers.min.js"></script>
+    <script src="js/vuetify/vuetify.js"></script>
+    <script src="js/lodash.js"></script>
+    <script src="js/turf/turf.js"></script>
+    <script src="app/index.js"></script>
   </body>
 </html>
