@@ -14,81 +14,26 @@
     <!-- fontawesome -->
     <link rel="stylesheet" href="css/fontawesome/css/all.min.css"/>
     <!-- app -->
-    <link rel="stylesheet" href="css/app.css"/>
+    <link rel="stylesheet" href="css/app-locate.css"/>
   </head>
   <body>
     <div id="app">
       <v-app>
         <v-content>
           <v-container fluid>
-            <div class="download-container"
-              v-if="tilesCalculated && tilesRequired.length > 0"
-            >
-              <v-text-field
-                v-model="tileLayerTitle"
-                color="success"
-                label="Layer Title"
-                :clearable="true"
-              ></v-text-field>
-              <span>
-                <v-btn
-                  small
-                  color="success"
-                  :disabled="!tileLayerTitle"
-                  @click="loadTiles"
-                >
-                  <v-icon left>
-                    fa-download
-                  </v-icon>
-                  {{ tilesRequired.length }}
-                </v-btn>
-                <v-btn
-                  small
-                  color="success"
-                  @click="tilesCalculated = null"
-                >
-                  Cancel
-                </v-btn>
-              </span>
-            </div>
-            <div class="calculate-tiles"
-              v-if="drawnItemsJson.features.length > 0"
-            >
+            <div class="locateContainer">
               <v-btn
-                small
                 color="success"
-                @click="calculateTiles"
+                :loading="locationPending"
+                @click="locate"
               >
-                <v-icon>
-                  fa-calculator
-                </v-icon
-
-                >
-            </div>
-            <div class="zoom-display">
-              <v-btn
-                small
-                color="success"
-              >
-                {{ mapZoom }}
+                <v-icon>fa-crosshairs</v-icon>
               </v-btn>
             </div>
-            <v-select
-              class="select-1"
-              v-model="selectMinZoom"
-              :items="selectMinZoomItems"
-              label="Min"
-              dense
-              @change="tilesCalculated = false"
-            ></v-select>
-            <v-select
-              class="select-2"
-              v-model="selectMaxZoom"
-              :items="selectMaxZoomItems"
-              label="Max"
-              dense
-              @change="tilesCalculated = false"
-            ></v-select>
+            <div class="userLocationContainer">
+              <div>{{ userLat }}</div>
+              <div>{{ userLng }}</div>
+            </div>
             <div class="tileLayerContainer">
               <v-btn
                 small
@@ -156,6 +101,6 @@
     <script src="js/lodash.js"></script>
     <!-- we don't need ALL of turf, but I can't get the custom build thing to work -->
     <script src="js/turf/turf.js"></script>
-    <script src="app/index.js"></script>
+    <script src="app/index-locate.js"></script>
   </body>
 </html>

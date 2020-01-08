@@ -4,8 +4,8 @@ body{
 }
 .calculate-tiles{
   position: absolute;
-  left: 10px;
-  top: 220px;
+  left: 50px;
+  top: 85px;
   z-index: 1500;
 }
 #map{
@@ -17,16 +17,19 @@ body{
 }
 .download-container{
   position: absolute;
-  left: 10px;
-  top: 250px;
+  left: 50px;
+  top: 128px;
   z-index: 1500;
+  background-color: #eee;
+  padding: 4px;
+  border-radius: 5px;
 }
 .tile-button{
   float: right;
 }
 .tileLayerContainer{
   position: absolute;
-  top: 10px;
+  top: 19px;
   right: 10px;
   z-index: 1500;
 }
@@ -36,8 +39,8 @@ body{
 .select-1{
   width: 50px;
   position: absolute;
-  bottom: 28px;
-  left: 10px;
+  top: 10px;
+  left:120px;
   background-color: #eee;
   z-index: 1500;
   border-radius: 5px;
@@ -45,19 +48,19 @@ body{
 .select-2{
   width: 50px;
   position: absolute;
-  bottom: 28px;
-  left: 70px;
+  top: 10px;
+  left: 190px;
   background-color: #eee;
   z-index: 1500;
   border-radius: 5px;
 }
 .zoom-display{
   position: absolute;
-  top: 23px;
-  left: 40px;
+  top: 17px;
+  left: 50px;
   color: red;
   z-index: 1500;
-  background-color: #333;
+  
   padding: 1px;
   border-radius: 5px;
   font-size: 1.2rem;

@@ -1,0 +1,53 @@
+<html>
+  <head>
+    <title>tilerip-webview</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <!-- leaflet -->
+    <link rel="stylesheet" href="css/leaflet/leaflet.css"/> 
+    <!-- leaflet-geoman -->
+    <link rel="stylesheet" href="css/leaflet-geoman/leaflet-geoman.css"/>
+    <!-- leaflet extra markers -->
+    <link rel="stylesheet" href="js/leaflet-extra-markers/css/leaflet.extra-markers.min.css"/>
+    <!-- vuetify -->
+    <link rel="stylesheet" href="js/vuetify/vuetify.min.css"/>
+    <!-- fontawesome -->
+    <link rel="stylesheet" href="css/fontawesome/css/all.min.css"/>
+    <!-- app -->
+    <link rel="stylesheet" href="css/app-offline.css"/>
+  </head>
+  <body>
+    <div id="app">
+      <v-app>
+        <v-content>
+          <v-container fluid>
+            <div class="locateContainer">
+              <v-btn
+                color="success"
+                :loading="locationPending"
+                @click="locate"
+              >
+                <v-icon>fa-crosshairs</v-icon>
+              </v-btn>
+            </div>
+            <div class="userLocationContainer">
+              <div>{{ userLat }}</div>
+              <div>{{ userLng }}</div>
+            </div>
+            <div id="map"></div>
+          </v-container>
+        </v-content>
+      </v-app>
+    </div>
+
+    <script src="js/vue.js"></script>
+    <script src="js/leaflet.js"></script>
+    <script src="js/leaflet-geoman.min.js"></script>
+    <script src="js/leaflet-extra-markers/js/leaflet.extra-markers.min.js"></script>
+    <script src="js/vuetify/vuetify.js"></script>
+    <script src="js/lodash.js"></script>
+    <!-- we don't need ALL of turf, but I can't get the custom build thing to work -->
+    <script src="js/turf/turf.js"></script>
+    <script src="app/index-offline.js"></script>
+  </body>
+</html>

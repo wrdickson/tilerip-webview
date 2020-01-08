@@ -11,24 +11,20 @@ var app = new Vue({
       maxZoom: 17,
       attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
     }),
-    drawControlIsRendered: false,
-    drawnItems: null,
-    drawnItemsJson: {
-      type: 'FeatureCollection',
-      features: []
-    },
     esriWorldImagery: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
       attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
     }),
     isInitialRender: true,
     layersSelected: [],
+    locationPending: false,
+    locationServiceStarted: false,
     map: null,
     mapCenter: {
-      lat: 38,
-      lng: -109
+      lat: 38.556,
+      lng: -109.535
     },
     mapData: null,
-    mapZoom: 10,
+    mapZoom: 12,
     openStreetMap_Mapnik: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -38,14 +34,10 @@ var app = new Vue({
       attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
     }),
     renderedLayers: {},
-    selectMinZoom: 10,
-    selectMinZoomItems: [9, 10, 11, 12, 13, 14, 15],
-    selectMaxZoom: 15,
-    selectMaxZoomItems: [11, 12, 13, 14, 15],
     showTileLayerList: false,
-    tilesCalculated: false,
-    tileLayerTitle: null,
-    tilesRequired: [],
+    userLat: null,
+    userLng: null,
+    userLocationMarker: null,
     usgsTopo: L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/USA_Topo_Maps/MapServer/tile/{z}/{y}/{x}.jpg', {
       attribution: 'attributes here'
     }),
@@ -60,6 +52,26 @@ var app = new Vue({
   },
   created () {
     this.wHeight = window.innerHeight
+    //  register global functions that android will call
+    console.log("USER LOCATION", this.userLat + " " + this.userLng)
+    this.locationServiceStarted = true;
+    
+    window.loadUserLocation = (lat, lng) => {
+      this.locationPending = false
+      if(! this.userLocationMarker){
+        console.log("creating marker . . .")
+        this.userLat = lat
+        this.userLng = lng
+        
+        this.userLocationMarker = new L.Marker([this.userLat, this.userLng]).addTo(this.map)
+      } else {
+        console.log("re creating marker . . . ")
+        this.userLat = lat
+        this.userLng = lng
+        this.map.removeLayer(this.userLocationMarker)
+        this.userLocationMarker = new L.Marker([this.userLat, this.userLng]).addTo(this.map)
+      }
+    }
   },
   mounted () {
     window.onresize = () => {
@@ -79,72 +91,34 @@ var app = new Vue({
     })
     */
     this.renderMap()
+    //  let the android webview know we're loaded
+    //  eslint-ignore-next-line
+    MapClient.viewLoaded()
+
   },
   methods: {
-    calculateTiles () {
-      console.log('turf', turf)
-      //  tilesArray holds a list for all tiles needed
-      let tilesRequired = []
-      let iTiles = []
-      _.forEach(this.drawnItemsJson.features, drawnItem => {
-        let featureBBox = turf.bbox(drawnItem)
-        let neLat = featureBBox[3]
-        let neLng = featureBBox[2]
-        let swLat = featureBBox[1]
-        let swLng = featureBBox[0]
-        let minZoom = this.selectMinZoom
-        let maxZoom = this.selectMaxZoom
-        iTiles = this.jsRequestTiles(neLat, neLng, swLat, swLng, minZoom, maxZoom)
-        //  now, only add the object to the tiles array if it's
-        //  NOT already in there
-        _.forEach(iTiles, tileObj => {
-          let isInArray = _.find(tilesRequired, function (o) {
-            return o.x === tileObj.x && o.y === tileObj.y && o.z === tileObj.z
-          })
-          if (!isInArray) {
-            tilesRequired.push(tileObj)
-          }
-        })
-      })
-      console.log('tilesRequired.length', tilesRequired.length)
-      this.tilesRequired = tilesRequired
-      this.tilesCalculated = true;
-    },
     handleResize () {
       this.wHeight = window.innerHeight
       if (this.map) {
         this.map.invalidateSize()
       }
-      var elem = document.querySelector("#map")
-      elem.style.height = this.wHeight + "px"
+      var elem = document.querySelector('#map')
+      elem.style.height = this.wHeight + 'px'
     },
-    jsRequestTiles: (neLat, neLng, swLat, swLng, minZoom, maxZoom) => {
-      function degreesToRadians (degrees) {
-        var pi = Math.PI
-        return degrees * (pi / 180)
+    locate () {
+      console.log('locate()')
+      //  eslint-ignore-next-line
+      if(this.locationServiceStarted){
+        this.locationServiceStarted = false
+        this.userLat = ""
+        this.userLng = ""
+        this.map.removeLayer(this.userLocationMarker)
+        MapClient.stopGpsLocation()
+      } else {
+        this.locationServiceStarted = true
+        this.locationPending = true
+        MapClient.startGpsLocation()
       }
-      let tiles = []
-      let x, y, z
-      for (z = minZoom; z <= maxZoom; z++) {
-        let iNeY = Math.floor((1 - Math.log(Math.tan(degreesToRadians(neLat)) + 1 / Math.cos(degreesToRadians(neLat))) / Math.PI) / 2 * Math.pow(2, z))
-        let iSwY = Math.floor((1 - Math.log(Math.tan(degreesToRadians(swLat)) + 1 / Math.cos(degreesToRadians(swLat))) / Math.PI) / 2 * Math.pow(2, z))
-        for (y = iNeY; y <= iSwY; y++) {
-          //  now we iterate through the x, which we need to generate
-          let iNeX = Math.floor(((neLng + 180) / 360) * Math.pow(2, z))
-          let iSwX = Math.floor(((swLng + 180) / 360) * Math.pow(2, z))
-          for (x = iSwX; x <= iNeX; x++) {
-            let iTile = {}
-            iTile.z = z
-            iTile.x = x
-            iTile.y = y
-            tiles.push(iTile)
-          }
-        }
-      }
-      return tiles
-    },
-    loadTiles () {
-      TileripClient.loadTiles("load-tiles", JSON.stringify(this.tilesRequired))
     },
     renderMap () {
       let self = this
@@ -235,44 +209,8 @@ var app = new Vue({
         }).addTo(this.map)
       })
       */
-      this.drawnItems = L.geoJSON(this.drawnItemsJson, {
-        onEachFeature: function (feature, layer) {
-          layer.on('click', function (event) {
-            console.log('click', feature, layer)
-            self.handleFeatureClick(feature, layer)
-          })
-        },
-        pointToLayer: function (geoJsonPoint, latlng) {
-          return L.marker(latlng, { icon: defaultMarker })
-        },
-        style: function (feature) {
-          return {
-            color: 'blue',
-            weight: self.lineWidth,
-            opacity: 0.6,
-            stroke: true,
-            fill: false
-          }
-        }
-      })
-      this.map.addLayer(this.drawnItems)
-      // add leaflet-geoman controls with some options to the map
-      this.map.pm.addControls({
-        position: 'topleft',
-        drawCircle: false,
-        drawRectangle: true,
-        drawMarker: false,
-        drawPolygon: false,
-        drawPolyline: false,
-        drawCircleMarker: false,
-        dragMode: true,
-        cutPolygon: false
-      })
+  
 
-      this.map.pm.setPathOptions({
-        color: 'orange'
-      })
-      this.drawControlIsRendered = true
       this.map.on('moveend', event => {
         this.mapCenter = this.map.getCenter()
         this.mapBounds = this.map.getBounds()
@@ -280,42 +218,6 @@ var app = new Vue({
       })
       this.map.on('zoomend', event => {
         this.mapZoom = this.map.getZoom()
-      })
-      this.map.on('pm:create', function (event) {
-        var layer = event.layer
-        // this is critical and weird shit
-        // what we're doing is adding properties to the new layer/feature
-        // see https://stackoverflow.com/questions/29736345/adding-properties-to-a-leaflet-layer-that-will-become-geojson-options
-        const feature = layer.feature = layer.feature || {}
-        feature.type = feature.type || 'Feature'
-        var props = feature.properties = feature.properties || {}
-        props.title = 'Title'
-        props.bbox = layer.getBounds()
-        props.desc = 'Description'
-        self.drawnItems.addLayer(layer)
-        self.drawnItemsJson = self.drawnItems.toGeoJSON()
-        //  don't rerender . . .  it messes up rectangle editing
-        //  self.map.remove()
-        //  self.renderMap()
-        self.layerIsChanged = true
-        console.log('pm:create')
-        //  layers have changed, so . . disable the download button
-        self.tilesCalculated = false;
-      })
-      self.drawnItems.on('pm:edit', function (event) {
-        self.drawnItemsJson = self.drawnItems.toGeoJSON()
-        self.layerIsChanged = true
-        console.log('pm:edit', event.sourceTarget._bounds)
-        //  layers have changed, so . . disable the download button
-        self.tilesCalculated = false;
-      })
-      this.map.on('pm:remove', function (event) {
-        self.drawnItems.removeLayer(event.layer)
-        self.drawnItemsJson = self.drawnItems.toGeoJSON()
-        self.layerIsChanged = true
-        console.log('pm:remove')
-        //  layers have changed, so . . disable the download button
-        self.tilesCalculated = false;
       })
       if (this.isInitialRender === true) {
         this.isInitialRender = false
