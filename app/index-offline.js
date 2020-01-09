@@ -14,6 +14,7 @@ var app = new Vue({
     esriWorldImagery: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
       attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
     }),
+    imageObjects: [],
     isInitialRender: true,
     layersSelected: [],
     locationPending: false,
@@ -51,11 +52,12 @@ var app = new Vue({
     }
   },
   created () {
+    window.imageObjects = []
     this.wHeight = window.innerHeight
     //  register global functions that android will call
     console.log("USER LOCATION", this.userLat + " " + this.userLng)
     this.locationServiceStarted = true;
-    
+    /*
     window.loadUserLocation = (lat, lng) => {
       this.locationPending = false
       if(! this.userLocationMarker){
@@ -72,6 +74,7 @@ var app = new Vue({
         this.userLocationMarker = new L.Marker([this.userLat, this.userLng]).addTo(this.map)
       }
     }
+    */
   },
   mounted () {
     window.onresize = () => {
@@ -93,7 +96,21 @@ var app = new Vue({
     this.renderMap()
     //  let the android webview know we're loaded
     //  eslint-ignore-next-line
-    MapClient.viewLoaded()
+    //MapClient.viewLoaded()
+
+    
+    
+
+    window.loadImageString = function (iString) {
+      this.console.log("loadImageString()")
+      iObj = JSON.parse(iString)
+      this.console.log("iObj.x", iObj.x)
+      this.imageObjects.push(iObj)
+
+      this.console.log("imageObjects length" , this.imageObjects.length)
+      //  let thisImage = _.find(this.imageObjects, 
+ 
+    }
 
   },
   methods: {
@@ -113,14 +130,34 @@ var app = new Vue({
         this.userLat = ""
         this.userLng = ""
         this.map.removeLayer(this.userLocationMarker)
-        MapClient.stopGpsLocation()
+        //MapClient.stopGpsLocation()
       } else {
         this.locationServiceStarted = true
         this.locationPending = true
-        MapClient.startGpsLocation()
+       // MapClient.startGpsLocation()
       }
     },
     renderMap () {
+      L.TileLayer.Kitten = L.TileLayer.extend({
+        createTile: function (coords, done) {
+
+          //  eslint-disable-next-line
+          AndroidInterface.loadTile(JSON.stringify(coords))
+
+          var tile = document.createElement('div');
+          tile.innerHTML = [coords.x, coords.y, coords.z].join(', ');
+          tile.style.outline = '1px solid red';
+      
+          setTimeout(function () {
+              done(null, tile);	// Syntax is 'done(error, tile)'
+          }, 500 + Math.random() * 1500);
+      
+          return tile;
+      }
+       });
+    
+
+
       let self = this
       //  eslint-disable-next-line
       const defaultMarker = L.ExtraMarkers.icon({
@@ -145,7 +182,18 @@ var app = new Vue({
         position: 'bottomright'
       }
       L.control.scale(scaleOptions).addTo(this.map)
-      this.currentTileLayer.addTo(this.map)
+      L.tileLayer.kitten = function() {
+        return new L.TileLayer.Kitten();
+      }
+    
+      L.tileLayer.kitten().addTo(this.map);
+
+      //L.TileLayer.Offline = new L.TileLayer.Offline()
+      //L.TileLayer.Offline.addTo(this.map)
+      
+
+      
+      //this.currentTileLayer.addTo(this.map)
       //  interate through the data object and render geoJson
       /*
       _.forEach(this.mapData.layers_json, (layer) => {
