@@ -129,6 +129,7 @@ var app = new Vue({
         markerColor: 'blue',
         shape: 'circle',
         prefix: 'fas'
+        
       })
       //  eslint-disable-next-line
       const highlightMarker = L.ExtraMarkers.icon({

@@ -11,6 +11,7 @@ var app = new Vue({
       maxZoom: 17,
       attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
     }),
+    currentTileLayerTitle: '',
     drawControlIsRendered: false,
     drawnItems: null,
     drawnItemsJson: {
@@ -66,23 +67,10 @@ var app = new Vue({
       this.handleResize()
     }
     this.handleResize()
-    //  here we want to go to android and get the map data . .  
-    /*
-    api.map.getMap(this.mapId).then(response => {
-      this.mapData = response.data
-      //  set map center
-      this.mapCenter.lat = response.data.centroid_json.coordinates[1]
-      this.mapCenter.lng = response.data.centroid_json.coordinates[0]
-      //  set layersSelectd to all layers
-      this.layersSelected = response.data.layers
-      this.renderMap()
-    })
-    */
     this.renderMap()
   },
   methods: {
     calculateTiles () {
-      console.log('turf', turf)
       //  tilesArray holds a list for all tiles needed
       let tilesRequired = []
       let iTiles = []
@@ -106,7 +94,6 @@ var app = new Vue({
           }
         })
       })
-      console.log('tilesRequired.length', tilesRequired.length)
       this.tilesRequired = tilesRequired
       this.tilesCalculated = true;
     },
@@ -144,7 +131,10 @@ var app = new Vue({
       return tiles
     },
     loadTiles () {
-      TileripClient.loadTiles("load-tiles", JSON.stringify(this.tilesRequired))
+      //  get envelope and centroid of drawnItemsJson
+      let env = JSON.stringify(turf.envelope(this.drawnItemsJson))
+      let cent = JSON.stringify(turf.centroid(this.drawnItemsJson))
+      TileripClient.loadTiles(JSON.stringify(this.tilesRequired), this.tileLayerTitle, JSON.stringify(this.drawnItemsJson), this.currentTileLayerTitle, env, cent)
     },
     renderMap () {
       let self = this
@@ -171,7 +161,10 @@ var app = new Vue({
         position: 'bottomright'
       }
       L.control.scale(scaleOptions).addTo(this.map)
-      this.currentTileLayer.addTo(this.map)
+      //this.currentTileLayer.addTo(this.map)
+      //  add tile layer
+      this.tileServerOpenTopo()
+      
       //  interate through the data object and render geoJson
       /*
       _.forEach(this.mapData.layers_json, (layer) => {
@@ -324,21 +317,25 @@ var app = new Vue({
     tileServerOpenStreetMap () {
       this.map.removeLayer(this.currentTileLayer)
       this.currentTileLayer = this.openStreetMap_Mapnik
+      this.currentTileLayerTitle = 'openStreetMap'
       this.map.addLayer(this.currentTileLayer)
     },
     tileServerEsriWorldImagery () {
       this.map.removeLayer(this.currentTileLayer)
       this.currentTileLayer = this.esriWorldImagery
+      this.currentTileLayerTitle = 'esriWorldImagery'
       this.map.addLayer(this.currentTileLayer)
     },
     tileServerOpenTopo () {
       this.map.removeLayer(this.currentTileLayer)
       this.currentTileLayer = this.openTopoMap
+      this.currentTileLayerTitle = 'openTopo'
       this.map.addLayer(this.currentTileLayer)
     },
     tileServerUsgs (tileServer) {
       this.map.removeLayer(this.currentTileLayer)
       this.currentTileLayer = this.usgsTopo
+      this.currentTileLayerTitle = 'usgsTopo'
       this.map.addLayer(this.currentTileLayer)
     }
   }

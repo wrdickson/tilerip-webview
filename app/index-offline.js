@@ -56,8 +56,8 @@ var app = new Vue({
     this.wHeight = window.innerHeight
     //  register global functions that android will call
     console.log("USER LOCATION", this.userLat + " " + this.userLng)
-    this.locationServiceStarted = true;
-    /*
+    this.locationServiceStarted = false
+    
     window.loadUserLocation = (lat, lng) => {
       this.locationPending = false
       if(! this.userLocationMarker){
@@ -74,42 +74,23 @@ var app = new Vue({
         this.userLocationMarker = new L.Marker([this.userLat, this.userLng]).addTo(this.map)
       }
     }
-    */
+    
   },
   mounted () {
     window.onresize = () => {
       this.handleResize()
     }
     this.handleResize()
-    //  here we want to go to android and get the map data . .  
-    /*
-    api.map.getMap(this.mapId).then(response => {
-      this.mapData = response.data
-      //  set map center
-      this.mapCenter.lat = response.data.centroid_json.coordinates[1]
-      this.mapCenter.lng = response.data.centroid_json.coordinates[0]
-      //  set layersSelectd to all layers
-      this.layersSelected = response.data.layers
-      this.renderMap()
-    })
-    */
-    this.renderMap()
-    //  let the android webview know we're loaded
-    //  eslint-ignore-next-line
-    //MapClient.viewLoaded()
 
-    
-    
+    this.renderMap()
 
     window.loadImageString = function (iString) {
       this.console.log("loadImageString()")
       iObj = JSON.parse(iString)
-      this.console.log("iObj.x", iObj.x)
       this.imageObjects.push(iObj)
-
-      this.console.log("imageObjects length" , this.imageObjects.length)
-      //  let thisImage = _.find(this.imageObjects, 
- 
+      if(this.imageObjects.length > 100 ){
+        this.imageObjects = this.imageObjects.pop()
+      }
     }
 
   },
@@ -130,11 +111,11 @@ var app = new Vue({
         this.userLat = ""
         this.userLng = ""
         this.map.removeLayer(this.userLocationMarker)
-        //MapClient.stopGpsLocation()
+        AndroidInterface.stopGpsLocation()
       } else {
         this.locationServiceStarted = true
         this.locationPending = true
-       // MapClient.startGpsLocation()
+       AndroidInterface.startGpsLocation()
       }
     },
     renderMap () {
@@ -143,14 +124,26 @@ var app = new Vue({
 
           //  eslint-disable-next-line
           AndroidInterface.loadTile(JSON.stringify(coords))
-
-          var tile = document.createElement('div');
-          tile.innerHTML = [coords.x, coords.y, coords.z].join(', ');
-          tile.style.outline = '1px solid red';
+          
+          var tile = document.createElement('img');
       
           setTimeout(function () {
+              let iImageObj = {}
+              iImageObj = _.find(this.imageObjects, {'x':  coords.x.toString() , 'y': coords.y.toString(), 'z': coords.z.toString()})
+              //console.log("iImageObj.encodedImage", iImageObj.encodedImage)
+              //  decode
+              //var image = new Image();
+              if( iImageObj ){
+                //tile = document.createElement('img')
+                tile.src = 'data:image/jpg;base64,' + iImageObj.encodedImage;
+              } else {
+                tile.src = 'data:image/jpg;base64,' + "";
+                //tile = document.createElement('div')
+                //tile.innerHTML = [coords.x, coords.y, coords.z].join(', ')
+                //tile.style.outline = '1px solid red'
+              }
               done(null, tile);	// Syntax is 'done(error, tile)'
-          }, 500 + Math.random() * 1500);
+          }, 100);
       
           return tile;
       }
