@@ -1,48 +1,114 @@
-var app = new Vue({
-  el: '#app',
-  vuetify: new Vuetify({
-    icons: {
-      iconfont: 'fa'
+Vue.component('online-base', {
+  template: `
+    <v-container fluid>
+      <div class="locateContainer">
+        <v-btn
+          color="success"
+          :loading="locationPending"
+          @click="locate"
+        >
+          <v-icon>fa-crosshairs</v-icon>
+        </v-btn>
+      </div>
+      <div class="userLocationContainer">
+        <div>{{ userLat }}</div>
+        <div>{{ userLng }}</div>
+      </div>
+      <div class="tileLayerContainer">
+        <v-btn
+          small
+          class="tile-button"
+          color="success"
+          @click="showTileLayerList = !showTileLayerList"
+        >
+          <v-icon dense>fa-map</v-icon>
+        </v-btn>
+        <v-list  class="tile-layer-list"
+          v-if="showTileLayerList"
+          dense
+        >
+          <v-list-item-group>
+            <v-list-item
+              @click="tileServerUsgs()"
+            >
+              <v-list-item-content>
+                <v-list-item-title>
+                  USGS Topographic
+                </v-list-item-title>
+              </v-list-item-content>
+            </v-list-item>
+            <v-list-item
+              @click="tileServerOpenTopo()"
+            >
+              <v-list-item-content>
+                <v-list-item-title>
+                  Open Topo
+                </v-list-item-title>
+              </v-list-item-content>
+            </v-list-item>
+            <v-list-item
+              @click="tileServerEsriWorldImagery()"
+            >
+              <v-list-item-content>
+                <v-list-item-title>
+                  Esri World Imagery
+                </v-list-item-title>
+              </v-list-item-content>
+            </v-list-item>
+            <v-list-item
+              @click="tileServerOpenStreetMap()"
+            >
+              <v-list-item-content>
+                <v-list-item-title>
+                  Open Street Map
+                </v-list-item-title>
+              </v-list-item-content>
+            </v-list-item>
+          </v-list-item-group>
+        </v-list>
+      </div>
+      <div id="map"></div>
+    </v-container>
+  `,
+  name: 'online-base',
+  data: function () {
+    return {
+      currentTileLayer: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+        maxZoom: 17,
+        attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
+      }),
+      esriWorldImagery: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+      }),
+      isInitialRender: true,
+      layersSelected: [],
+      locationPending: false,
+      locationServiceStarted: false,
+      map: null,
+      mapCenter: {
+        lat: 38.556,
+        lng: -109.535
+      },
+      mapData: null,
+      mapZoom: 12,
+      openStreetMap_Mapnik: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      }),
+      openTopoMap: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+        maxZoom: 17,
+        attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
+      }),
+      renderedLayers: {},
+      showTileLayerList: false,
+      userLat: null,
+      userLng: null,
+      userLocationMarker: null,
+      usgsTopo: L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/USA_Topo_Maps/MapServer/tile/{z}/{y}/{x}.jpg', {
+        attribution: 'attributes here'
+      }),
+      wHeight: 600
     }
-  }),
-  name: "TileRipWebview",
-  data: {
-    currentTileLayer: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-      maxZoom: 17,
-      attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
-    }),
-    esriWorldImagery: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-      attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
-    }),
-    imageObjects: [],
-    isInitialRender: true,
-    layersSelected: [],
-    locationPending: false,
-    locationServiceStarted: false,
-    map: null,
-    mapCenter: {
-      lat: 38.556,
-      lng: -109.535
-    },
-    mapData: null,
-    mapZoom: 12,
-    openStreetMap_Mapnik: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    }),
-    openTopoMap: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-      maxZoom: 17,
-      attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
-    }),
-    renderedLayers: {},
-    showTileLayerList: false,
-    userLat: null,
-    userLng: null,
-    userLocationMarker: null,
-    usgsTopo: L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/USA_Topo_Maps/MapServer/tile/{z}/{y}/{x}.jpg', {
-      attribution: 'attributes here'
-    }),
-    wHeight: 600
   },
   computed: {
     mapHeight: {
@@ -52,11 +118,10 @@ var app = new Vue({
     }
   },
   created () {
-    window.imageObjects = []
     this.wHeight = window.innerHeight
     //  register global functions that android will call
     console.log("USER LOCATION", this.userLat + " " + this.userLng)
-    this.locationServiceStarted = false
+    this.locationServiceStarted = true;
     
     window.loadUserLocation = (lat, lng) => {
       this.locationPending = false
@@ -74,29 +139,33 @@ var app = new Vue({
         this.userLocationMarker = new L.Marker([this.userLat, this.userLng]).addTo(this.map)
       }
     }
-    
   },
   mounted () {
     window.onresize = () => {
       this.handleResize()
     }
     this.handleResize()
-
+    //  here we want to go to android and get the map data . .  
+    /*
+    api.map.getMap(this.mapId).then(response => {
+      this.mapData = response.data
+      //  set map center
+      this.mapCenter.lat = response.data.centroid_json.coordinates[1]
+      this.mapCenter.lng = response.data.centroid_json.coordinates[0]
+      //  set layersSelectd to all layers
+      this.layersSelected = response.data.layers
+      this.renderMap()
+    })
+    */
     this.renderMap()
-
-    window.loadImageString = function (iString) {
-      this.console.log("loadImageString()")
-      iObj = JSON.parse(iString)
-      this.imageObjects.push(iObj)
-      if(this.imageObjects.length > 100 ){
-        this.imageObjects.shift()
-      }
-    }
+    //  let the android webview know we're loaded
+    //  eslint-ignore-next-line
+    MapClient.viewLoaded()
 
   },
   methods: {
     handleResize () {
-      this.wHeight = window.innerHeight
+      this.wHeight = window.innerHeight -48
       if (this.map) {
         this.map.invalidateSize()
       }
@@ -111,46 +180,14 @@ var app = new Vue({
         this.userLat = ""
         this.userLng = ""
         this.map.removeLayer(this.userLocationMarker)
-        AndroidInterface.stopGpsLocation()
+        MapClient.stopGpsLocation()
       } else {
         this.locationServiceStarted = true
         this.locationPending = true
-       AndroidInterface.startGpsLocation()
+        MapClient.startGpsLocation()
       }
     },
     renderMap () {
-      L.TileLayer.Kitten = L.TileLayer.extend({
-        createTile: function (coords, done) {
-
-          //  eslint-disable-next-line
-          AndroidInterface.loadTile(JSON.stringify(coords))
-          
-          var tile = document.createElement('img');
-      
-          setTimeout(function () {
-              let iImageObj = {}
-              iImageObj = _.find(this.imageObjects, {'x':  coords.x.toString() , 'y': coords.y.toString(), 'z': coords.z.toString()})
-              //console.log("iImageObj.encodedImage", iImageObj.encodedImage)
-              //  decode
-              //var image = new Image();
-              if( iImageObj ){
-                //tile = document.createElement('img')
-                tile.src = 'data:image/jpg;base64,' + iImageObj.encodedImage;
-              } else {
-                tile.src = 'data:image/jpg;base64,' + "";
-                //tile = document.createElement('div')
-                //tile.innerHTML = [coords.x, coords.y, coords.z].join(', ')
-                //tile.style.outline = '1px solid red'
-              }
-              done(null, tile);	// Syntax is 'done(error, tile)'
-          }, 100);
-      
-          return tile;
-      }
-       });
-    
-
-
       let self = this
       //  eslint-disable-next-line
       const defaultMarker = L.ExtraMarkers.icon({
@@ -159,6 +196,7 @@ var app = new Vue({
         markerColor: 'blue',
         shape: 'circle',
         prefix: 'fas'
+        
       })
       //  eslint-disable-next-line
       const highlightMarker = L.ExtraMarkers.icon({
@@ -175,18 +213,7 @@ var app = new Vue({
         position: 'bottomright'
       }
       L.control.scale(scaleOptions).addTo(this.map)
-      L.tileLayer.kitten = function() {
-        return new L.TileLayer.Kitten();
-      }
-    
-      L.tileLayer.kitten().addTo(this.map);
-
-      //L.TileLayer.Offline = new L.TileLayer.Offline()
-      //L.TileLayer.Offline.addTo(this.map)
-      
-
-      
-      //this.currentTileLayer.addTo(this.map)
+      this.currentTileLayer.addTo(this.map)
       //  interate through the data object and render geoJson
       /*
       _.forEach(this.mapData.layers_json, (layer) => {

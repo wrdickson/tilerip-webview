@@ -1,0 +1,101 @@
+<html>
+  <head>
+    <title>tilerip-baseline</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <!-- leaflet -->
+    <link rel="stylesheet" href="css/leaflet/leaflet.css"/> 
+    <!-- leaflet-geoman -->
+    <link rel="stylesheet" href="css/leaflet-geoman/leaflet-geoman.css"/>
+    <!-- leaflet extra markers -->
+    <link rel="stylesheet" href="js/leaflet-extra-markers/css/leaflet.extra-markers.min.css"/>
+    <!-- vuetify -->
+    <link rel="stylesheet" href="js/vuetify/vuetify.min.css"/>
+    <!-- fontawesome -->
+    <link rel="stylesheet" href="css/fontawesome/css/all.min.css"/>
+    <!-- app -->
+    <link rel="stylesheet" href="css/app-baseline.css"/>
+    <link rel="stylesheet" href="css/app-locate.css"/>
+  </head>
+  <body>
+  <v-app id="app">
+    <v-navigation-drawer
+      v-model="drawer"
+      mobile-break-point="700"
+      width="200"
+      app
+    >
+      <v-btn
+        class="mt-2"
+        text
+        @click.stop="drawer = !drawer"
+      >
+        <v-icon
+          color="green darken-2"
+        >
+          fa-bars
+        </v-icon>
+      </v-btn>
+      <v-list
+        
+        dense>
+        <v-list-item link>
+          <v-list-item-action>
+            <v-icon small>fa-home</v-icon>
+          </v-list-item-action>
+          <v-list-item-content>
+            <v-list-item-title>Home</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+        <v-list-item link>
+          <v-list-item-action>
+            <v-icon small color="green">fa-cannabis</v-icon>
+          </v-list-item-action>
+          <v-list-item-content>
+            <v-list-item-title>Puff</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+      </v-list>
+    </v-navigation-drawer>
+
+    <v-app-bar
+      app
+      color="green darken-1"
+      dense
+      dark
+      flat
+    >
+      <v-icon @click.stop="drawer = !drawer">
+        fa-bars
+      </v-icon>
+      <v-toolbar-title class="ml-4">MyTrail.org Android</v-toolbar-title>
+    </v-app-bar>
+
+    <v-content>
+      <v-container
+        fluid
+      >
+      <online-base></online-base>
+
+      </v-container>
+    </v-content>
+  </v-app>
+
+    <script src="js/vue.js"></script>
+
+    <script src="js/leaflet.js"></script>
+    <script src="js/leaflet-geoman.min.js"></script>
+    <script src="js/leaflet-extra-markers/js/leaflet.extra-markers.min.js"></script>
+    <script src="js/vuetify/vuetify.js"></script>
+    <script src="js/lodash.js"></script>
+    <!-- we don't need ALL of turf, but I can't get the custom build thing to work -->
+    <script src="js/turf/turf.js"></script>
+
+    <script src="app/components/someComponent.js"></script>
+    <script src="app/components/someOtherComponent.js"></script>
+    <script src="app/components/onlineBase.js"></script>
+
+
+    <script src="app/index-baseline.js"></script>
+  </body>
+</html>
